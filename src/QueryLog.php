@@ -4,8 +4,15 @@ use Haruncpi\QueryLog\Supports\JsonLogFileWriter;
 use Haruncpi\QueryLog\Supports\TextLogFileWriter;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * QueryLog Class
+ * @since 1.0.0
+ */
 class QueryLog
 {
+    const FORMAT_TEXT = 'text';
+    const FORMAT_JSON = 'json';
+
     /**
      * @var string file name for query log inside storage directory
      */
@@ -44,12 +51,12 @@ class QueryLog
     public function __construct()
     {
         $this->file_path = storage_path($this->file_name);
-        $this->format = trim(env('QUERY_LOG_FORMAT', 'text'));
+        $this->format = trim(env('QUERY_LOG_FORMAT', self::FORMAT_TEXT));
         $this->total_query = 0;
         $this->total_time = 0;
         $this->final = [];
 
-        if (!in_array(strtolower($this->format), ['text', 'json'])) {
+        if (!in_array(strtolower($this->format), [self::FORMAT_TEXT, self::FORMAT_JSON])) {
             throw new \Exception('Invalid query log data file format. Support text or json file format.');
         }
 
@@ -65,6 +72,8 @@ class QueryLog
     /**
      * Query listener
      * @return void
+     *
+     * @since 1.0.0
      */
     private function listenQueries()
     {
@@ -93,16 +102,14 @@ class QueryLog
                 'total_time'  => $this->total_time
             ];
 
-            if ($this->format == 'json') {
+            if ($this->format == self::FORMAT_JSON && isset($this->final['queries'])) {
                 (new JsonLogFileWriter)->write($this->file_path, $this->final);
             }
 
-            if ($this->format == 'text') {
+            if ($this->format == self::FORMAT_TEXT && isset($this->final['queries'])) {
                 (new TextLogFileWriter)->write($this->file_path, $this->final);
             }
-
         });
-
     }
 
     /**
@@ -110,6 +117,8 @@ class QueryLog
      *
      * @param $query
      * @return string
+     *
+     * @since 1.0.0
      */
     private function getSqlWithBindings($query)
     {
@@ -126,6 +135,8 @@ class QueryLog
      * @param object $query
      * @param array $trace
      * @return void
+     *
+     * @since 1.0.0
      */
     private function addQuery($query, $trace)
     {
